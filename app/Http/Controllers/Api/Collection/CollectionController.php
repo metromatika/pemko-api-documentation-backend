@@ -1,4 +1,4 @@
-<?php
+d<?php
 
 namespace App\Http\Controllers\Api\Collection;
 
@@ -103,7 +103,7 @@ class CollectionController extends Controller
     {
         if (auth()->check()) {
             if (auth()->user()->isProgrammer()) {
-                if ($collection->user_id == auth()->user()->id)
+                if ($collection->user_id == auth()->user()->id || $collection->access_type == Collection::COLLECTION_ACCESS_TYPE_PUBLIC )
                     return response()->json([
                         'message' => 'OK',
                         'data' => $collection
