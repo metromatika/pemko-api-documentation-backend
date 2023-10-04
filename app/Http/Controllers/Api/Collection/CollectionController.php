@@ -1,4 +1,4 @@
-d<?php
+<?php
 
 namespace App\Http\Controllers\Api\Collection;
 
@@ -65,7 +65,7 @@ class CollectionController extends Controller
 
         return response()->json([
             'message' => 'Successfully retrieved collections',
-            'data' => $collections->paginate(10)
+            'data' => $collections->paginate(6)
         ]);
     }
 
