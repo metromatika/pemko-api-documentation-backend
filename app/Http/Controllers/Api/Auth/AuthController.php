@@ -63,7 +63,6 @@ class AuthController extends Controller
     {
         $input = [
             'name' => $request->validated('name'),
-            'username' => $request->validated('username'),
             'office' => $request->validated('office'),
             'email' => $request->validated('email'),
             'password' => bcrypt($request->validated('password')),
