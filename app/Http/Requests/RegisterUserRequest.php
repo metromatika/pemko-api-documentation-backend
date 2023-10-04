@@ -26,7 +26,6 @@ class RegisterUserRequest extends FormRequest
     {
         return [
             'name' => ['required'],
-            'username' => ['required', 'unique:' . User::class . ',username'],
             'email' => ['required', 'email', 'unique:' . User::class . ',email'],
             'office' => ['required', 'string'],
             'password' => ['required'],
@@ -43,9 +42,6 @@ class RegisterUserRequest extends FormRequest
     {
         return [
             'name.required' => 'Name is required',
-
-            'username.required' => 'Username is required',
-            'username.unique' => 'Username is already registered',
 
             'email.required' => 'Email is required',
             'email.email' => 'Email is invalid',
