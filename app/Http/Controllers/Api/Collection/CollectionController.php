@@ -58,6 +58,10 @@ class CollectionController extends Controller
             $collections = $collections->public();
         }
 
+        $collections = $collections->when($request->has('title'), function ($query) use ($request) {
+            return $query->where('title', 'like', '%' . $request->get('title') . '%');
+        });
+
 
         return response()->json([
             'message' => 'Successfully retrieved collections',
