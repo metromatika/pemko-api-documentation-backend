@@ -58,10 +58,14 @@ class CollectionController extends Controller
             $collections = $collections->public();
         }
 
+        $collections = $collections->when($request->has('title'), function ($query) use ($request) {
+            return $query->where('title', 'like', '%' . $request->get('title') . '%');
+        });
+
 
         return response()->json([
             'message' => 'Successfully retrieved collections',
-            'data' => $collections->paginate(10)
+            'data' => $collections->paginate(6)
         ]);
     }
 
@@ -99,7 +103,7 @@ class CollectionController extends Controller
     {
         if (auth()->check()) {
             if (auth()->user()->isProgrammer()) {
-                if ($collection->user_id == auth()->user()->id)
+                if ($collection->user_id == auth()->user()->id || $collection->access_type == Collection::COLLECTION_ACCESS_TYPE_PUBLIC )
                     return response()->json([
                         'message' => 'OK',
                         'data' => $collection

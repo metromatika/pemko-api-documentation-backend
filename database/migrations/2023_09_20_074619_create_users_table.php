@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->uuid('id');
             $table->uuid('role_id')->nullable();
             $table->string('name');
-            $table->string('username')->unique();
+            $table->string('username')->nullable();
             $table->string('office')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
