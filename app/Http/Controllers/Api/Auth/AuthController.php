@@ -47,7 +47,7 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (!$token = auth()->attempt($credentials)) {
-           return $this->errorResponse('Invalid credential', 401);
+            return $this->errorResponse('Invalid credential', 401);
         }
 
         return $this->respondWithToken($token);
@@ -73,11 +73,14 @@ class AuthController extends Controller
 
         Mail::to($request->validated('email'))->send(new SendVerificationEmail($verificationCode));
 
-        DB::transaction(function () use ($input) {
+        $user =  DB::transaction(function () use ($input) {
             return $this->userModel->create($input);
         });
 
-        return $this->login($request);
+        return response()->json([
+            'message' => 'User successfully registered.',
+            'data' => $user
+        ]);
     }
 
     /**
