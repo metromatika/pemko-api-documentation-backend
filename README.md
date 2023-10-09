@@ -11,11 +11,11 @@ The API Documentation Diskominfo project aims to provide detailed documentation 
 
 To set up the API Documentation Diskominfo project, please ensure that your system meets the following requirements:
 
-- Laravel 9
-- PHP 8.0 or higher
-- MySQL 5.7 or higher
-- Node 18 or higher
-- Composer 2.5 or higher
+-   Laravel 9
+-   PHP 8.0 or higher
+-   MySQL 5.7 or higher
+-   Node 18 or higher
+-   Composer 2.5 or higher
 
 After ensuring the system requirements are met, follow these steps to set up the project:
 
@@ -39,7 +39,13 @@ php artisan key:generate
 php artisan migrate
 ```
 
-5. Seed the database with initial data by running the following command:
+5. Don't forget to generate JWT secret for the application.
+
+```bash
+php artisan jwt:secret
+```
+
+6. Seed the database with initial data by running the following command:
 
 ```bash
 php artisan db:seed
