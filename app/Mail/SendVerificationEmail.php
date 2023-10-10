@@ -14,15 +14,17 @@ class SendVerificationEmail extends Mailable
     use Queueable, SerializesModels;
 
     public string $verificationCode;
+    public string $userName;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($verificationCode)
+    public function __construct($verificationCode, $userName)
     {
         $this->verificationCode = $verificationCode;
+        $this->userName = $userName;
     }
 
     /**
@@ -48,6 +50,7 @@ class SendVerificationEmail extends Mailable
             markdown: 'emails.send-verification-email',
             with: [
                 'verificationCode' => $this->verificationCode,
+                'userName' => $this->userName
             ],
         );
     }
