@@ -27,8 +27,7 @@ class CollectionController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
-     *
+     * @param Request $request
      * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
@@ -61,7 +60,6 @@ class CollectionController extends Controller
         $collections = $collections->when($request->has('title'), function ($query) use ($request) {
             return $query->where('title', 'like', '%' . $request->get('title') . '%');
         })->orderByDesc('created_at');
-
 
         return response()->json([
             'message' => 'Successfully retrieved collections',
