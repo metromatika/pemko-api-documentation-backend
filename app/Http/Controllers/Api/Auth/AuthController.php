@@ -71,7 +71,7 @@ class AuthController extends Controller
 
         $verificationCode = Otp::generate($input['email']);
 
-        Mail::to($request->validated('email'))->send(new SendVerificationEmail($verificationCode));
+        Mail::to($request->validated('email'))->send(new SendVerificationEmail($verificationCode, $input['name']));
 
         $user =  DB::transaction(function () use ($input) {
             return $this->userModel->create($input);
