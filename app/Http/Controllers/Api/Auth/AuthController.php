@@ -62,11 +62,11 @@ class AuthController extends Controller
     public function register(RegisterUserRequest $request)
     {
         $input = [
-            'name' => $request->validated('name'),
-            'office' => $request->validated('office'),
-            'email' => $request->validated('email'),
-            'password' => bcrypt($request->validated('password')),
-            'role_id' => $this->roleModel->firstWhere('alias', '=', 'programmer')->id
+            'name'      => $request->validated('name'),
+            'office'    => $request->validated('office'),
+            'email'     => $request->validated('email'),
+            'password'  => bcrypt($request->validated('password')),
+            'role_id'   => $this->roleModel->firstWhere('alias', '=', 'programmer')->id
         ];
 
         $verificationCode = Otp::generate($input['email']);
@@ -78,8 +78,8 @@ class AuthController extends Controller
         });
 
         return response()->json([
-            'message' => 'User successfully registered.',
-            'data' => $user
+            'message'   => 'User successfully registered.',
+            'data'      => $user
         ]);
     }
 

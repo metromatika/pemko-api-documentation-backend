@@ -2,12 +2,16 @@
 
 namespace App\Exceptions;
 
+use App\Traits\ApiResponser;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
+    use ApiResponser;
+
     /**
      * A list of exception types with their corresponding custom log levels.
      *
@@ -49,13 +53,7 @@ class Handler extends ExceptionHandler
         });
 
         $this->renderable(function (NotFoundHttpException $e, $request) {
-            return response()->json([
-                'error' =>
-                    [
-                        'code' => 404,
-                        'message' => 'Not Found'
-                    ]
-            ]);
+            $this->errorResponse('The requested resource could not be found.', Response::HTTP_NOT_FOUND);
         });
 
 

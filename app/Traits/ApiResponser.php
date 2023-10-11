@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
+use Psy\Util\Json;
+use Symfony\Component\HttpFoundation\Response;
 
 trait ApiResponser
 {
@@ -12,10 +15,10 @@ trait ApiResponser
      * @param int $code
      * @return JsonResponse
      */
-    private function successResponse(mixed $data, int $code = 200): JsonResponse
+    private function successResponse(mixed $data, int $code = Response::HTTP_OK): JsonResponse
     {
         return response()->json([
-            'message' => 'OK',
+            'success' => 'true',
             'data' => $data
         ], $code);
     }
@@ -29,6 +32,24 @@ trait ApiResponser
      */
     private function errorResponse($message, $code): JsonResponse
     {
-        return response()->json(['error' => ['code' => $code, 'message' => $message]], $code);
+        return response()->json([
+            'success' => false,
+            'error' => [
+                'code' => $code,
+                'message' => $message
+            ]
+        ], $code);
     }
+
+    /**
+     * Generate a no content response
+     *
+     * @return JsonResponse
+     */
+    private function noContentResponse(): JsonResponse
+    {
+        return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    
 }
