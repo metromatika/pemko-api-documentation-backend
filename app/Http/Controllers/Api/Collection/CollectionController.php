@@ -60,7 +60,7 @@ class CollectionController extends Controller
 
         $collections = $collections->when($request->has('title'), function ($query) use ($request) {
             return $query->where('title', 'like', '%' . $request->get('title') . '%');
-        });
+        })->orderByDesc('created_at');
 
 
         return response()->json([
@@ -103,7 +103,7 @@ class CollectionController extends Controller
     {
         if (auth()->check()) {
             if (auth()->user()->isProgrammer()) {
-                if ($collection->user_id == auth()->user()->id || $collection->access_type == Collection::COLLECTION_ACCESS_TYPE_PUBLIC )
+                if ($collection->user_id == auth()->user()->id || $collection->access_type == Collection::COLLECTION_ACCESS_TYPE_PUBLIC)
                     return response()->json([
                         'message' => 'OK',
                         'data' => $collection
