@@ -80,7 +80,7 @@ class CollectionController extends Controller
 
         return response()->json([
             'message' => 'Successfully retrieved collections',
-            'data' => $collections->paginate(6)
+            'data' => $collections
         ]);
     }
 
