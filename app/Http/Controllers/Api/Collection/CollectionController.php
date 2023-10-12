@@ -44,22 +44,22 @@ class CollectionController extends Controller
     {
         $collections = $this->collectionModel;
 
-        if (auth()->check()) {
-            if (auth()->user()->isAdmin()) {
+        if (Auth::check()) {
+            if (Auth::user()->isAdmin()) {
                 $collections = $collections->admin()
                     ->when($request->has('access_type'), function ($query) use ($request) {
                         return $query->where('access_type', $request->get('access_type'));
                     });
-            } else if (auth()->user()->isProgrammer()) {
+            } else if (Auth::user()->isProgrammer()) {
                 $collections = $collections->when($request->has('get'), function ($query) use ($request) {
                     if ($request->get('get') == 'self') {
-                        return $query->programmer(auth()->user()->id)
+                        return $query->programmer(Auth::user()->id)
                             ->when($request->has('access_type'), function ($query) use ($request) {
                                 return $query->where('access_type', $request->get('access_type'));
                             });
                     }
 
-                    return $query->programmer(auth()->user()->id)
+                    return $query->programmer(Auth::user()->id)
                         ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
                 });
             }
@@ -143,7 +143,7 @@ class CollectionController extends Controller
      */
     public function update(UpdateCollectionRequest $request, Collection $collection)
     {
-        if (auth()->user()->id == $collection->user_id) {
+        if (Auth::user()->id == $collection->user_id) {
             $input = [
                 'project_name' => $request->validated('project_name') ?? $collection->project_name,
                 'access_type' => $request->validated('access_type') ?? $collection->access_type,
@@ -172,8 +172,8 @@ class CollectionController extends Controller
      */
     public function destroy(Collection $collection)
     {
-        if (auth()->user()->isProgrammer()) {
-            if ($collection->user_id != auth()->user()->id) {
+        if (Auth::user()->isProgrammer()) {
+            if ($collection->user_id != Auth::user()->id) {
                 return $this->errorResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
             }
         }
