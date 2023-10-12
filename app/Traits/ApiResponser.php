@@ -15,10 +15,15 @@ trait ApiResponser
      * @param int $code
      * @return JsonResponse
      */
-    private function successResponse(mixed $data, int $code = Response::HTTP_OK): JsonResponse
+    private function successResponse(
+        mixed  $data,
+        string $message = 'OK',
+        int    $code = Response::HTTP_OK
+    ): JsonResponse
     {
         return response()->json([
             'success' => 'true',
+            'message' => $message,
             'data' => $data
         ], $code);
     }
@@ -51,5 +56,5 @@ trait ApiResponser
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    
+
 }

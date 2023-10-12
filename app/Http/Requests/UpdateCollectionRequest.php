@@ -30,7 +30,7 @@ class UpdateCollectionRequest extends FormRequest
         ];
 
         return [
-            'title' => ['sometimes', 'required', 'max:255'],
+            'project_name' => ['sometimes', 'required', 'max:255'],
             'access_type' => ['sometimes', 'required', 'in:' . implode(',', $accessTypes)],
         ];
     }
@@ -43,8 +43,8 @@ class UpdateCollectionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'Title is required',
-            'title.max' => 'Title is too long',
+            'project_name.required' => 'Project name is required',
+            'project_name.max' => 'Project name is too long, max 255 characters',
 
             'access_type.required' => 'Access type is required',
             'access_type.in' => 'Access type is invalid',

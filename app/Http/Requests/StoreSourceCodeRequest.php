@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSourceCodeRequest extends FormRequest
@@ -24,8 +25,9 @@ class StoreSourceCodeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'max:255'],
-            'file' => ['required', 'file', 'mimes:zip,rar', 'max:512000'],
+            'collection_id' => ['required', 'uuid', 'exists:' . Collection::class . ',id'],
+            'source_code_file' => ['required', 'array', 'max:3'],
+            'source_code_file.*' => ['required', 'file', 'mimes:zip,rar', 'max:512000'],
         ];
     }
 
@@ -35,13 +37,18 @@ class StoreSourceCodeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Name is required',
-            'name.max' => 'Name must be less than 255 characters',
+            'collection_id.required' => 'The collection is required',
+            'collection_id.uuid' => 'The collection is invalid',
+            'collection_id.exist' => 'The collection does not exist',
 
-            'file.required' => 'Source code file is required',
-            'file.file' => 'Source code file must be a file',
-            'file.mimes' => 'Source code file must be zip or rar file',
-            'file.max' => 'Maximum source code file is 500MB'
+            'source_code_file.required' => 'Source code file is required',
+            'source_code_file.array' => 'Source code file should be array',
+            'source_code_file.size' => 'Maximum uploaded file is 3',
+
+            'source_code_file.*.required' => 'Source code file is required',
+            'source_code_file.*.file' => 'Source code file must be a file',
+            'source_code_file.*.mimes' => 'Source code file must be zip or rar file',
+            'source_code_file.*.max' => 'Maximum source code file is 500MB'
         ];
     }
 }

@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api\SourceCode;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSourceCodeRequest;
+use App\Interfaces\CollectionInterface;
 use App\Models\SourceCode;
+use App\Models\Collection;
 use App\Traits\ApiResponser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -24,9 +27,24 @@ class SourceCodeController extends Controller
      */
     protected sourceCode $sourceCodeModel;
 
-    public function __construct(SourceCode $sourceCodeModel)
+    /**
+     * @var Collection
+     */
+    protected Collection $collectionModel;
+
+    /**
+     * @var CollectionInterface
+     */
+    protected CollectionInterface $collectionRepository;
+
+    public function __construct(
+        SourceCode          $sourceCodeModel,
+        Collection          $collectionModel,
+        CollectionInterface $collectionRepository)
     {
         $this->sourceCodeModel = $sourceCodeModel;
+        $this->collectionModel = $collectionModel;
+        $this->collectionRepository = $collectionRepository;
     }
 
     /**
@@ -63,20 +81,26 @@ class SourceCodeController extends Controller
      */
     public function store(StoreSourceCodeRequest $request): JsonResponse
     {
-        $sourceCode = DB::transaction(function () use ($request) {
-            $sourceCode = $this->sourceCodeModel
-                ->create([
-                    'name' => $request->validated('name'),
-                    'user_id' => auth()->user()->id
-                ]);
+        $collection = $this->collectionModel
+            ->select(['id', 'user_id', 'project_name'])
+            ->find($request->validated('collection_id'));
 
-            $sourceCode = $this->handleUploadFile($request->file('file'), $sourceCode);
-            $sourceCode->save();
 
-            return $sourceCode;
+        if (!$collection) {
+            return $this->errorResponse('Collection not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $currentSourceCode = $collection->sourceCode->count();
+        $newSourceCodeCount = $currentSourceCode + count($request->file('source_code_file'));
+
+        if ($currentSourceCode > 5 || $newSourceCodeCount > 5)
+            return $this->errorResponse('The maximum number of source code is 5', Response::HTTP_CONFLICT);
+
+        DB::transaction(function () use ($request, $collection) {
+            $this->collectionRepository->uploadSourceCode($request->file('source_code_file'), $collection);
         });
 
-        return $this->successResponse($sourceCode, Response::HTTP_CREATED);
+        return $this->successResponse($collection->load('sourceCode'), 'Source code created successfully', Response::HTTP_CREATED);
     }
 
     /**
@@ -87,8 +111,9 @@ class SourceCodeController extends Controller
      */
     public function show(SourceCode $sourceCode)
     {
+        $collection = $sourceCode->load('collection')->collection;
         if (auth()->user()->isProgrammer())
-            if ($sourceCode->user_id != auth()->user()->id)
+            if ($collection->user_id != \Auth::user()->id)
                 return $this->errorResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
 
         return $this->successResponse($sourceCode);
@@ -103,8 +128,10 @@ class SourceCodeController extends Controller
 
     public function destroy(SourceCode $sourceCode)
     {
+        $collection = $sourceCode->load('collection')->collection;
+
         if (auth()->user()->isProgrammer())
-            if ($sourceCode->user_id != auth()->user()->id)
+            if ($collection->user_id != Auth::user()->id)
                 return $this->errorResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
 
         Storage::delete($sourceCode->file_path);
@@ -121,7 +148,7 @@ class SourceCodeController extends Controller
      */
     public function download(SourceCode $sourceCode)
     {
-        return response()->download($sourceCode->file_url);
+        return response()->download(storage_path('app/public/' . $sourceCode->file_path));
     }
 
     private function handleUploadFile(UploadedFile $file, SourceCode $sourceCode)

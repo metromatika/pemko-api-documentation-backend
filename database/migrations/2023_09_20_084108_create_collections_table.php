@@ -15,9 +15,10 @@ return new class extends Migration {
         Schema::create('collections', function (Blueprint $table) {
             $table->uuid('id');
             $table->uuid('user_id')->nullable();
-            $table->string('title');
+            $table->string('project_name');
             $table->string('access_type');
             $table->json('json_file');
+            $table->string('source_code_path')->nullable();
             $table->timestamps();
 
             $table->primary('id');

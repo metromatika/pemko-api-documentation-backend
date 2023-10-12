@@ -10,20 +10,19 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('source_codes', function (Blueprint $table) {
             $table->uuid('id');
-            $table->uuid('user_id')->nullable();
-            $table->string('name');
+            $table->uuid('collection_id');
             $table->string('file_path')->nullable();
             $table->timestamps();
 
             $table->primary('id');
-            $table->foreign('user_id')
+            $table->foreign('collection_id')
                 ->references('id')
-                ->on('users')
-                ->nullOnDelete()
+                ->on('collections')
+                ->cascadeOnDelete()
                 ->cascadeOnUpdate();
         });
     }

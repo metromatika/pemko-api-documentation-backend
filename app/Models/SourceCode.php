@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SourceCode extends Model
 {
@@ -22,22 +23,15 @@ class SourceCode extends Model
      *
      * @var array<string>
      */
-    protected $fillable = ['name', 'file_path', 'user_id'];
+    protected $fillable = ['file_path', 'collection_id'];
 
     /**
-     * The attributes that should be appended to the model.
+     * Retrieve the related collection for this model.
      *
-     * @var array<string>
+     * @return BelongsTo
      */
-    protected $appends = ['file_url'];
-
-    /**
-     * Get the url file for the source code.
-     *
-     * @return string
-     */
-    public function getFileUrlAttribute(): string
+    public function collection(): BelongsTo
     {
-        return asset('storage/' . $this->file_path);
+        return $this->belongsTo(Collection::class, 'collection_id', 'id')->select(['id', 'user_id', 'project_name']);
     }
 }
