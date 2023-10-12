@@ -71,6 +71,13 @@ class CollectionController extends Controller
             return $query->where('title', 'like', '%' . $request->get('title') . '%');
         })->orderByDesc('created_at');
 
+
+        $collections = $collections->paginate(6);
+
+        if ($collections->isEmpty()) {
+            return $this->errorResponse('The requested resource could not be found.', Response::HTTP_NOT_FOUND);
+        }
+
         return response()->json([
             'message' => 'Successfully retrieved collections',
             'data' => $collections->paginate(6)
