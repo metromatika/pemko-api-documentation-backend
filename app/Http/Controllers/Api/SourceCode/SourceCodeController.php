@@ -93,7 +93,7 @@ class SourceCodeController extends Controller
         $currentSourceCode = $collection->sourceCode->count();
         $newSourceCodeCount = $currentSourceCode + count($request->file('source_code_file'));
 
-        if ($currentSourceCode > 5 || $newSourceCodeCount > 5)
+        if ($newSourceCodeCount > 5)
             return $this->errorResponse('The maximum number of source code is 5', Response::HTTP_CONFLICT);
 
         DB::transaction(function () use ($request, $collection) {
@@ -113,7 +113,7 @@ class SourceCodeController extends Controller
     {
         $collection = $sourceCode->load('collection')->collection;
         if (auth()->user()->isProgrammer())
-            if ($collection->user_id != \Auth::user()->id)
+            if ($collection->user_id != Auth::user()->id)
                 return $this->errorResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
 
         return $this->successResponse($sourceCode);
