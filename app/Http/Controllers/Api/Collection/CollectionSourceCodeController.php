@@ -25,7 +25,7 @@ class CollectionSourceCodeController extends Controller
         $collection = $collection->load('sourceCode');
 
         if ($collection->sourceCode->isEmpty()) {
-            return $this->errorResponse('No source code found', Response::HTTP_NOT_FOUND);
+            return $this->successResponse([], 'No collection found');
         }
 
         if (Auth::user()->isProgrammer()) {

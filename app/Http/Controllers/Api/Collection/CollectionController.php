@@ -74,7 +74,7 @@ class CollectionController extends Controller
         $collections = $collections->paginate(6);
 
         if ($collections->isEmpty()) {
-            return $this->errorResponse('Collection not found', Response::HTTP_NOT_FOUND);
+            return $this->successResponse([], 'No collection found');
         }
 
         return $this->successResponse($collections, 'Collections retrieved successfully');
