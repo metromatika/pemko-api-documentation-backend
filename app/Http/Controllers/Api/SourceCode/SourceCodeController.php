@@ -54,15 +54,13 @@ class SourceCodeController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
         $sourceCode = $this->sourceCodeModel
-            ->when(auth()->user()->isProgrammer(), function ($query) {
-                return $query->where('user_id', auth()->user()->id);
+            ->when($user->isProgrammer(), function ($query) use ($user) {
+                return $query->where('user_id', $user->id);
             })
-            ->when(auth()->user()->isAdmin(), function ($query) {
+            ->when($user->isAdmin(), function ($query) {
                 return $query;
-            })
-            ->when($request->has('name'), function ($query) use ($request) {
-                return $query->where('name', 'like', '%' . $request->name . '%');
             })
             ->orderByDesc('created_at')
             ->paginate(10);
