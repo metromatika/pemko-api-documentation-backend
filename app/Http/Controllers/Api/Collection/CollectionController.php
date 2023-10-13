@@ -67,7 +67,7 @@ class CollectionController extends Controller
             $collections = $collections->public();
         }
 
-        $collections = $collections->when($request->has('title'), function ($query) use ($request) {
+        $collections = $collections->when($request->has('project_name'), function ($query) use ($request) {
             return $query->where('project_name', 'like', '%' . $request->get('title') . '%');
         })->orderByDesc('created_at');
 
