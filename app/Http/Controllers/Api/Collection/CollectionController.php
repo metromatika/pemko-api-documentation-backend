@@ -68,7 +68,7 @@ class CollectionController extends Controller
         }
 
         $collections = $collections->when($request->has('title'), function ($query) use ($request) {
-            return $query->where('title', 'like', '%' . $request->get('title') . '%');
+            return $query->where('project_name', 'like', '%' . $request->get('title') . '%');
         })->orderByDesc('created_at');
 
         $collections = $collections->paginate(6);
