@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Collection;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Collection;
 use App\Traits\ApiResponser;
 use Illuminate\Support\Facades\Auth;

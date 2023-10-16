@@ -150,8 +150,10 @@ class CollectionController extends Controller
             $input = [
                 'project_name' => $request->validated('project_name') ?? $collection->project_name,
                 'access_type' => $request->validated('access_type') ?? $collection->access_type,
-                'json_file' => $collection->json_file
             ];
+
+            if ($request->hasFile('json_file'))
+                $input['json_file'] = $this->getJSONContent($request);
 
             DB::transaction(function () use ($input, $collection) {
                 return $collection->update($input);
