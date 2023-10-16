@@ -32,11 +32,11 @@ class StoreCollectionRequest extends FormRequest
         ];
 
         return [
-            'project_name' => ['required', 'max:255'],
+            'project_name' => ['required', 'string' , 'max:255'],
             'access_type' => ['required', 'in:' . implode(',', $accessTypes)],
             'json_file' => ['required', 'file', new JsonFile],
-            'source_code_file' => ['sometimes', 'required', 'array', 'max:3'],
-            'source_code_file.*' => ['required', 'file', 'mimes:zip,rar', 'max:512000'],
+            'source_code_file' => ['sometimes', 'required', 'array', 'max:5'],
+            'source_code_file.*' => ['required', 'file', 'mimes:zip,rar'],
         ];
     }
 
@@ -49,6 +49,7 @@ class StoreCollectionRequest extends FormRequest
     {
         return [
             'project_name.required' => 'Project name is required',
+            'project_name.string' => 'Project name must be string',
             'project_name.max' => 'Project name must be less than 255 characters',
 
             'access_type.required' => 'Access type is required',
@@ -60,12 +61,11 @@ class StoreCollectionRequest extends FormRequest
 
             'source_code_file.required' => 'Source code file is required',
             'source_code_file.array' => 'Source code file should be array',
-            'source_code_file.size' => 'Maximum uploaded file is 3',
+            'source_code_file.size' => 'Maximum uploaded file is 5',
 
             'source_code_file.*.required' => 'Source code file is required',
             'source_code_file.*.file' => 'Source code file must be a file',
             'source_code_file.*.mimes' => 'Source code file must be zip or rar file',
-            'source_code_file.*.max' => 'Maximum source code file is 500MB'
         ];
     }
 }

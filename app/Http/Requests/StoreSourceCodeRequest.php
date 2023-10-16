@@ -26,8 +26,8 @@ class StoreSourceCodeRequest extends FormRequest
     {
         return [
             'collection_id' => ['required', 'uuid', 'exists:' . Collection::class . ',id'],
-            'source_code_file' => ['required', 'array', 'max:3'],
-            'source_code_file.*' => ['required', 'file', 'mimes:zip,rar', 'max:512000'],
+            'source_code_file' => ['required', 'array', 'max:5'],
+            'source_code_file.*' => ['required', 'file', 'mimes:zip,rar'],
         ];
     }
 
@@ -43,12 +43,11 @@ class StoreSourceCodeRequest extends FormRequest
 
             'source_code_file.required' => 'Source code file is required',
             'source_code_file.array' => 'Source code file should be array',
-            'source_code_file.size' => 'Maximum uploaded file is 3',
+            'source_code_file.size' => 'Maximum uploaded file is 5',
 
             'source_code_file.*.required' => 'Source code file is required',
             'source_code_file.*.file' => 'Source code file must be a file',
             'source_code_file.*.mimes' => 'Source code file must be zip or rar file',
-            'source_code_file.*.max' => 'Maximum source code file is 500MB'
         ];
     }
 }
