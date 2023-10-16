@@ -5,52 +5,61 @@ namespace App\Http\Controllers\Api\Collection;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
+use App\Interfaces\CollectionInterface;
 use App\Models\Collection;
 use App\Traits\ApiResponser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 
 
 class CollectionController extends Controller
 {
     use ApiResponser;
 
-    public Collection $collectionModel;
+    /**
+     * @var Collection
+     */
+    private Collection $collectionModel;
 
-    public function __construct(Collection $collectionModel)
+    /**
+     * @var CollectionInterface
+     */
+    private CollectionInterface $collectionRepository;
+
+    public function __construct(Collection $collectionModel, CollectionInterface $collectionRepository)
     {
         $this->collectionModel = $collectionModel;
+        $this->collectionRepository = $collectionRepository;
         $this->middleware('auth', ['except' => ['index', 'show']]);
     }
 
     /**
-     * Display a listing of the resource.
-     *
+     * @param Request $request
      * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
         $collections = $this->collectionModel;
 
-        if (auth()->check()) {
-            if (auth()->user()->isAdmin()) {
+        if (Auth::check()) {
+            if (Auth::user()->isAdmin()) {
                 $collections = $collections->admin()
                     ->when($request->has('access_type'), function ($query) use ($request) {
                         return $query->where('access_type', $request->get('access_type'));
                     });
-            } else if (auth()->user()->isProgrammer()) {
+            } else if (Auth::user()->isProgrammer()) {
                 $collections = $collections->when($request->has('get'), function ($query) use ($request) {
                     if ($request->get('get') == 'self') {
-                        return $query->programmer(auth()->user()->id)
+                        return $query->programmer(Auth::user()->id)
                             ->when($request->has('access_type'), function ($query) use ($request) {
                                 return $query->where('access_type', $request->get('access_type'));
                             });
                     }
 
-                    return $query->programmer(auth()->user()->id)
+                    return $query->programmer(Auth::user()->id)
                         ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
                 });
             }
@@ -58,15 +67,17 @@ class CollectionController extends Controller
             $collections = $collections->public();
         }
 
-        $collections = $collections->when($request->has('title'), function ($query) use ($request) {
-            return $query->where('title', 'like', '%' . $request->get('title') . '%');
-        });
+        $collections = $collections->when($request->has('project_name'), function ($query) use ($request) {
+            return $query->where('project_name', 'like', '%' . $request->get('project_name') . '%');
+        })->orderByDesc('created_at');
 
+        $collections = $collections->paginate(6);
 
-        return response()->json([
-            'message' => 'Successfully retrieved collections',
-            'data' => $collections->paginate(6)
-        ]);
+        if ($collections->isEmpty()) {
+            return $this->successResponse([], 'No collection found');
+        }
+
+        return $this->successResponse($collections, 'Collections retrieved successfully');
     }
 
     /**
@@ -79,18 +90,20 @@ class CollectionController extends Controller
     {
         $collection = DB::transaction(function () use ($request) {
             $jsonContent = $this->getJSONContent($request);
-            return $this->collectionModel->create([
-                'user_id' => auth()->user()->id,
-                'title' => $jsonContent['info']['name'] ?? 'Untitled',
+            $collection = $this->collectionModel->create([
+                'user_id' => Auth::user()->id,
+                'project_name' => $request->validated('project_name'),
                 'access_type' => $request->validated('access_type'),
                 'json_file' => $jsonContent
             ]);
+
+            if ($request->has('source_code_file')) {
+                $this->collectionRepository->uploadSourceCode($request->file('source_code_file'), $collection);
+            }
+            return $collection;
         });
 
-        return response()->json([
-            'message' => 'Collection created successfully',
-            'data' => $collection
-        ], 201);
+        return $this->successResponse($collection, 'Collection created successfully', Response::HTTP_CREATED);
     }
 
     /**
@@ -101,42 +114,27 @@ class CollectionController extends Controller
      */
     public function show(Collection $collection)
     {
-        if (auth()->check()) {
-            if (auth()->user()->isProgrammer()) {
-                if ($collection->user_id == auth()->user()->id || $collection->access_type == Collection::COLLECTION_ACCESS_TYPE_PUBLIC )
-                    return response()->json([
-                        'message' => 'OK',
-                        'data' => $collection
-                    ]);
+        if (Auth::check()) {
 
-                return response()->json([
-                    'error' => [
-                        'code' => 401,
-                        'message' => 'Unauthorized'
-                    ]
-                ]);
+            $user = Auth::user();
+            $collection = $collection->load('sourceCode');
+
+            if ($user->isProgrammer()) {
+                if ($collection->user_id == $user->id) {
+                    return $this->successResponse($collection, 'Collection retrieved successfully');
+                }
             }
 
-            return response()->json([
-                'message' => 'OK',
-                'data' => $collection
-            ]);
-
-        } else {
-            if ($collection->access_type == 'public')
-                return response()->json([
-                    'message' => 'OK',
-                    'data' => $collection]);
-
-
-            return response()->json([
-                'error' => [
-                    'code' => 401,
-                    'message' => 'Unauthorized'
-                ]
-            ]);
+            if ($user->isAdmin()) {
+                return $this->successResponse($collection, 'Collection retrieved successfully');
+            }
         }
 
+        if ($collection->access_type == Collection::COLLECTION_ACCESS_TYPE_PUBLIC) {
+            return $this->successResponse($collection, 'Collection retrieved successfully');
+        }
+
+        return $this->errorResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
     }
 
     /**
@@ -148,9 +146,9 @@ class CollectionController extends Controller
      */
     public function update(UpdateCollectionRequest $request, Collection $collection)
     {
-        if (auth()->user()->id == $collection->user_id) {
+        if (Auth::user()->id == $collection->user_id) {
             $input = [
-                'title' => $request->validated('title') ?? $collection->title,
+                'project_name' => $request->validated('project_name') ?? $collection->project_name,
                 'access_type' => $request->validated('access_type') ?? $collection->access_type,
                 'json_file' => $collection->json_file
             ];
@@ -165,12 +163,7 @@ class CollectionController extends Controller
             ]);
         }
 
-        return response()->json([
-            'error' => [
-                'code' => 401,
-                'message' => 'Unauthorized'
-            ]
-        ]);
+        return $this->errorResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
     }
 
 
@@ -178,29 +171,22 @@ class CollectionController extends Controller
      * Remove the specified resource from storage.
      *
      * @param Collection $collection
-     * @return JsonResponse|Response
+     * @return JsonResponse
      */
     public function destroy(Collection $collection)
     {
-        if (auth()->user()->isProgrammer()) {
-            if ($collection->user_id == auth()->user()->id) {
-                $collection->delete();
-
-                return response()->noContent();
+        if (Auth::user()->isProgrammer()) {
+            if ($collection->user_id != Auth::user()->id) {
+                return $this->errorResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
             }
-
-            return response()->json([
-                [
-                    'error' => [
-                        'code' => 401,
-                        'message' => 'Unauthorized'
-                    ]
-                ]
-            ]);
         }
 
-        $collection->delete();
-        return response()->noContent();
+        DB::transaction(function () use ($collection) {
+            $this->collectionRepository->deleteSourceCode($collection);
+            $collection->delete();
+        });
+
+        return $this->noContentResponse();
     }
 
     /**
@@ -217,12 +203,8 @@ class CollectionController extends Controller
             return json_decode($jsonFile->getContent(), true);
         }
 
-        return response()->json([
-            'error' => [
-                'code' => 500,
-                'message' => 'An error occurred'
-            ]
-        ]);
+        return $this->errorResponse('Invalid JSON file', Response::HTTP_BAD_REQUEST);
     }
+
 
 }

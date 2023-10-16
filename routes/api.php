@@ -1,9 +1,10 @@
 <?php
 
 
-use App\Http\Controllers\Api\Collection\CollectionController;
 use App\Http\Controllers\Api\Auth\AuthController;
-use App\Http\Controllers\Api\Auth\SendEmailVerificationController;
+use App\Http\Controllers\Api\Collection\CollectionController;
+use App\Http\Controllers\Api\Collection\CollectionSourceCodeController;
+use App\Http\Controllers\Api\SourceCode\SourceCodeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,3 +30,9 @@ Route::prefix('auth')->group(function () {
 
 Route::apiResource('collection', CollectionController::class);
 
+Route::middleware('auth')->group(function () {
+    Route::get('collection/{collection}/source-code', [CollectionSourceCodeController::class, 'getSourceCodeByCollection']);
+
+    Route::get('source-code/{source_code}/download', [SourceCodeController::class, 'download'])->name('source-code.download');
+    Route::apiResource('source-code', SourceCodeController::class);
+});

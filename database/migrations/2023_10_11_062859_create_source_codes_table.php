@@ -12,20 +12,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('collections', function (Blueprint $table) {
+        Schema::create('source_codes', function (Blueprint $table) {
             $table->uuid('id');
-            $table->uuid('user_id')->nullable();
-            $table->string('project_name');
-            $table->string('access_type');
-            $table->json('json_file');
-            $table->string('source_code_path')->nullable();
+            $table->uuid('collection_id');
+            $table->string('file_path')->nullable();
             $table->timestamps();
 
             $table->primary('id');
-            $table->foreign('user_id')
-                ->on('users')
+            $table->foreign('collection_id')
                 ->references('id')
-                ->nullOnDelete()
+                ->on('collections')
+                ->cascadeOnDelete()
                 ->cascadeOnUpdate();
         });
     }
@@ -37,6 +34,6 @@ return new class extends Migration {
      */
     public function down()
     {
-        Schema::dropIfExists('collections');
+        Schema::dropIfExists('source_codes');
     }
 };
