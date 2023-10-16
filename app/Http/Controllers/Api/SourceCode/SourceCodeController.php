@@ -88,12 +88,6 @@ class SourceCodeController extends Controller
             return $this->errorResponse('Collection not found', Response::HTTP_NOT_FOUND);
         }
 
-        $currentSourceCode = $collection->sourceCode->count();
-        $newSourceCodeCount = $currentSourceCode + count($request->file('source_code_file'));
-
-        if ($newSourceCodeCount > 5)
-            return $this->errorResponse('The maximum number of source code is 5', Response::HTTP_CONFLICT);
-
         DB::transaction(function () use ($request, $collection) {
             $this->collectionRepository->uploadSourceCode($request->file('source_code_file'), $collection);
         });
