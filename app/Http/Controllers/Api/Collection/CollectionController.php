@@ -42,64 +42,36 @@ class CollectionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $collections = $this->collectionModel;
+        $collections = $this->collectionModel->when(Auth::check(), function ($query) use ($request) {
+            return $query->when($request->has('get'), function ($query) use ($request) {
+                if ($request->get('get') == 'self') {
+                    return $query->where('user_id', Auth::user()->id);
+                }
 
-//        $collections = $this->collectionModel->when(Auth::check(), function ($query) use ($request) {
-//            return $query->when($request->has('get'), function ($query) use ($request) {
-//                if ($request->get('get') == 'self') {
-//                    return $query->where('user_id', Auth::user()->id);
-//                }
-//                return $query;
-//
-//            })->when(Auth::user()->isProgrammer(), function ($query) use ($request) {
-//                return $query->where('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
-//            })->when($request->has('access_type'), function ($query) use ($request) {
-//                return $query->where('access_type', $request->get('access_type'));
-//            });
-//
-//        })->when(!Auth::check(), function ($query) use ($request) {
-//            return $query->public();
-//        })->when($request->has('project_name'), function ($query) use ($request) {
-//            return $query->where('project_name', 'like', '%' . $request->get('project_name') . '%');
-//        })
-//            ->orderByDesc('created_at')
-//            ->paginate(6);
-
-
-        if (Auth::check()) {
-            if (Auth::user()->isAdmin()) {
-                $collections = $collections->when($request->has('get'), function ($query) use ($request) {
-                    if ($request->input('get') == 'self')
-                        return $query->where('user_id', Auth::user()->id);
-
-                    return $query;
-                })
-                    ->when($request->has('access_type'), function ($query) use ($request) {
-                        return $query->where('access_type', $request->get('access_type'));
-                    });
-            } else if (Auth::user()->isProgrammer()) {
-                $collections = $collections->when($request->has('get'), function ($query) use ($request) {
-                    if ($request->get('get') == 'self') {
-                        return $query->programmer(Auth::user()->id)
-                            ->when($request->has('access_type'), function ($query) use ($request) {
-                                return $query->where('access_type', $request->get('access_type'));
-                            });
-                    }
-
+                if (Auth::user()->isProgrammer()) {
                     return $query->programmer(Auth::user()->id)
                         ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
-                })->when(!$request->has('get'), function ($query) use ($request) {
+                }
+
+                return $query;
+
+            })->when(!$request->has('get'), function ($query) use ($request) {
+                if (Auth::user()->isProgrammer()) {
                     return $query->programmer(Auth::user()->id)
                         ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
-                });
-            }
-        } else {
-            $collections = $collections->public();
-        }
+                }
+                return $query;
+            })->when($request->has('access_type'), function ($query) use ($request) {
+                return $query->where('access_type', $request->get('access_type'));
+            });
 
-        $collections = $collections->orderByDesc('created_at')
+        })->when(!Auth::check(), function ($query) use ($request) {
+            return $query->public();
+        })->when($request->has('project_name'), function ($query) use ($request) {
+            return $query->where('project_name', 'like', '%' . $request->get('project_name') . '%');
+        })
+            ->orderByDesc('created_at')
             ->paginate(6);
-
 
         if ($collections->isEmpty()) {
             return $this->successResponse([], 'No collection found');
