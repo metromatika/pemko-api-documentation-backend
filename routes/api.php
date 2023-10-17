@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Collection\CollectionController;
 use App\Http\Controllers\Api\Collection\CollectionSourceCodeController;
 use App\Http\Controllers\Api\SourceCode\SourceCodeController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
