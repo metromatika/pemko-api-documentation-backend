@@ -49,29 +49,33 @@ class CollectionController extends Controller
                 }
 
                 if (Auth::user()->isProgrammer()) {
-                    return $query->programmer(Auth::user()->id)
-                        ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
+                    return $query->where(function ($query) {
+                        return $query->programmer(Auth::user()->id)
+                            ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
+                    });
                 }
 
                 return $query;
-
             })->when(!$request->has('get'), function ($query) use ($request) {
                 if (Auth::user()->isProgrammer()) {
-                    return $query->programmer(Auth::user()->id)
-                        ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
+                    return $query->where(function ($query) {
+                        return $query->programmer(Auth::user()->id)
+                            ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
+                    });
                 }
+
                 return $query;
             })->when($request->has('access_type'), function ($query) use ($request) {
                 return $query->where('access_type', $request->get('access_type'));
             });
-
-        })->when(!Auth::check(), function ($query) use ($request) {
+        })->when(!Auth::check(), function ($query) {
             return $query->public();
         })->when($request->has('project_name'), function ($query) use ($request) {
-            return $query->where('project_name', 'like', '%' . $request->get('project_name') . '%');
+            return $query->where('project_name', 'like', '%' . $request->query('project_name') . '%');
         })
             ->orderByDesc('created_at')
             ->paginate(6);
+
 
         if ($collections->isEmpty()) {
             return $this->successResponse([], 'No collection found');
@@ -207,6 +211,4 @@ class CollectionController extends Controller
 
         return $this->errorResponse('Invalid JSON file', Response::HTTP_BAD_REQUEST);
     }
-
-
 }
