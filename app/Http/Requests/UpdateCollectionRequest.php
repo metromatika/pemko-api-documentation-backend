@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Collection;
+use App\Rules\JsonFile;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCollectionRequest extends FormRequest
@@ -32,6 +33,7 @@ class UpdateCollectionRequest extends FormRequest
         return [
             'project_name' => ['sometimes', 'required', 'max:255'],
             'access_type' => ['sometimes', 'required', 'in:' . implode(',', $accessTypes)],
+            'json_file' => ['sometimes', 'required', 'file', new JsonFile],
         ];
     }
 
@@ -45,6 +47,8 @@ class UpdateCollectionRequest extends FormRequest
         return [
             'project_name.required' => 'Project name is required',
             'project_name.max' => 'Project name is too long, max 255 characters',
+
+            'json_file.required' => 'JSON file is required',
 
             'access_type.required' => 'Access type is required',
             'access_type.in' => 'Access type is invalid',

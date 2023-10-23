@@ -42,36 +42,40 @@ class CollectionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $collections = $this->collectionModel;
+        $collections = $this->collectionModel->when(Auth::check(), function ($query) use ($request) {
+            return $query->when($request->has('get'), function ($query) use ($request) {
+                if ($request->get('get') == 'self') {
+                    return $query->where('user_id', Auth::user()->id);
+                }
 
-        if (Auth::check()) {
-            if (Auth::user()->isAdmin()) {
-                $collections = $collections->admin()
-                    ->when($request->has('access_type'), function ($query) use ($request) {
-                        return $query->where('access_type', $request->get('access_type'));
-                    });
-            } else if (Auth::user()->isProgrammer()) {
-                $collections = $collections->when($request->has('get'), function ($query) use ($request) {
-                    if ($request->get('get') == 'self') {
+                if (Auth::user()->isProgrammer()) {
+                    return $query->where(function ($query) {
                         return $query->programmer(Auth::user()->id)
-                            ->when($request->has('access_type'), function ($query) use ($request) {
-                                return $query->where('access_type', $request->get('access_type'));
-                            });
-                    }
+                            ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
+                    });
+                }
 
-                    return $query->programmer(Auth::user()->id)
-                        ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
-                });
-            }
-        } else {
-            $collections = $collections->public();
-        }
+                return $query;
+            })->when(!$request->has('get'), function ($query) use ($request) {
+                if (Auth::user()->isProgrammer()) {
+                    return $query->where(function ($query) {
+                        return $query->programmer(Auth::user()->id)
+                            ->orWhere('access_type', Collection::COLLECTION_ACCESS_TYPE_PUBLIC);
+                    });
+                }
 
-        $collections = $collections->when($request->has('project_name'), function ($query) use ($request) {
-            return $query->where('project_name', 'like', '%' . $request->get('project_name') . '%');
-        })->orderByDesc('created_at');
+                return $query;
+            })->when($request->has('access_type'), function ($query) use ($request) {
+                return $query->where('access_type', $request->get('access_type'));
+            });
+        })->when(!Auth::check(), function ($query) {
+            return $query->public();
+        })->when($request->has('project_name'), function ($query) use ($request) {
+            return $query->where('project_name', 'like', '%' . $request->query('project_name') . '%');
+        })
+            ->orderByDesc('created_at')
+            ->paginate(6);
 
-        $collections = $collections->paginate(6);
 
         if ($collections->isEmpty()) {
             return $this->successResponse([], 'No collection found');
@@ -150,8 +154,10 @@ class CollectionController extends Controller
             $input = [
                 'project_name' => $request->validated('project_name') ?? $collection->project_name,
                 'access_type' => $request->validated('access_type') ?? $collection->access_type,
-                'json_file' => $collection->json_file
             ];
+
+            if ($request->hasFile('json_file'))
+                $input['json_file'] = $this->getJSONContent($request);
 
             DB::transaction(function () use ($input, $collection) {
                 return $collection->update($input);
@@ -205,6 +211,4 @@ class CollectionController extends Controller
 
         return $this->errorResponse('Invalid JSON file', Response::HTTP_BAD_REQUEST);
     }
-
-
 }

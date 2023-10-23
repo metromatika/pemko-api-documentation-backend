@@ -6,6 +6,7 @@ use App\Traits\ApiResponser;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
@@ -67,8 +68,17 @@ class Handler extends ExceptionHandler
         }
 
         if ($e instanceof ModelNotFoundException) {
-            $modelName = strtolower(class_basename($e->getModel()));
+            $modelName = preg_replace('/(?<!^)([A-Z])/', ' $1', class_basename($e->getModel()));
+            $modelName = ucfirst(strtolower($modelName));
+
             return $this->errorResponse("{$modelName} not found", Response::HTTP_NOT_FOUND);
+        }
+
+        if ($e instanceof ValidationException) {
+            $error =$e->validator
+                ->errors()
+                ->first();
+            return $this->errorResponse($error, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         return parent::render($request, $e);

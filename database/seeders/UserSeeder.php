@@ -23,5 +23,13 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password'),
             'role_id' => Role::firstWhere('name', '=', 'administrator')->id
         ]);
+
+        $programmer = User::factory()->create([
+            'name' => 'Programmer',
+            'username' => 'programmer',
+            'email' => 'programmer@gmail.com',
+            'password' => bcrypt('password'),
+            'role_id' => Role::firstWhere('name', '=', 'programmer')->id
+        ]);
     }
 }

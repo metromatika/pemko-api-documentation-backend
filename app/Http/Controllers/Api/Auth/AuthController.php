@@ -46,7 +46,7 @@ class AuthController extends Controller
     {
         $credentials = $request->only('email', 'password');
 
-        if (!$token = auth()->attempt($credentials)) {
+        if (!$token = Auth::attempt($credentials)) {
             return $this->errorResponse('Invalid credential', 401);
         }
 
@@ -90,7 +90,7 @@ class AuthController extends Controller
      */
     public function me()
     {
-        return response()->json(auth()->user()->load('role'));
+        return response()->json(Auth::user()->load('role'));
     }
 
     /**
@@ -100,7 +100,7 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        auth()->logout();
+        Auth::logout();
         return response()->json(['message' => 'Successfully log out']);
     }
 
@@ -111,7 +111,7 @@ class AuthController extends Controller
      */
     public function refresh()
     {
-        return $this->respondWithToken(auth()->refresh());
+        return $this->respondWithToken(Auth::refresh());
     }
 
     /**
@@ -157,7 +157,7 @@ class AuthController extends Controller
         return $this->successResponse([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
+            'expires_in' => Auth::factory()->getTTL() * 60
         ]);
     }
 }
